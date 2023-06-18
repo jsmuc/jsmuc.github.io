@@ -85,7 +85,7 @@ function encrypt(source){
 	if(ckbx){c=zip_text(bf.encrypt(t))}
 	else{c=zip_text(t)}
 	console.log(c)
-	let link=url.protocol+"//"+url.pathname+"#"+c
+	let link=url.href+"#"+c
 	//document.getElementById("output").textContent=c
 	document.getElementById("source").value=c
 	document.getElementById("link").textContent=document.getElementById("link").href=link
