@@ -1,0 +1,164 @@
+<!doctype html><html lang=any><title>·message & url crypter·</title>
+<script src=uz.js></script><script src=bf.js></script>
+<body><noscript>JAVASCRIPT IS REQUIRED</noscript>
+<center><svg id=spinner xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" style="width:50px;height:50px;border:0;margin:0;padding:0" viewBox="0 0 100 100">
+<circle cx="50" cy="50" fill="none" stroke="#bcd" stroke-width="12" r="32" stroke-dasharray="150 50" transform="rotate(50 50 50)">
+	<animateTransform attributeName="transform" type="rotate" repeatCount="indefinite" dur="2s" values="0 50 50;360 50 50" keyTimes="0;1"></animateTransform>
+</circle></svg></center>
+<script>
+// https://stackoverflow.com/a/73147529
+let auint_utf=(a)=>String.fromCharCode.apply(null,a)
+let auint_b64=(a)=>btoa(String.fromCharCode(...a))
+let b64_auint=(b)=>new Uint8Array([...atob(b)].map(c=>c.charCodeAt()))
+let utf_auint=(t)=>new TextEncoder(encoding="utf-8").encode(t)
+//let b64_utf=(b)=>decodeURIComponent(escape(atob(b)))
+//let utf_b64=(t)=>btoa(unescape(encodeURIComponent(t)))
+let b64_utf=(b)=>auint_utf(b64_auint(b))
+let utf_b64=(t)=>auint_b64(utf_auint(t))
+let utf_clear=(t)=>t.replace(/\x00/g,"")//.replace(/[\u0000-\u0008,\u000A-\u001F,\u007F-\u00A0]+/g,”)
+let url=new URL(location)
+let q=location.search.slice(1)
+let h=location.hash.slice(1)
+//function preload(){
+if(!q && h){
+	try{
+		let c=utf_clear(auint_utf(UZIP.inflateRaw(b64_auint(h))))
+		location.href=new URL(c).toString()
+	}
+	catch(e){
+		console.error(e)
+		console.log('not href. move on')
+	}
+}
+</script><style>
+*{font-family:Helvetica,sans-serif;}
+/**{font-family:Helvetica,sans-serif;border:black solid;padding:2px}*/
+body{width:80%; margin:0 10%; font-size:12pt;}
+tt{font-family:Consolas,monospace,monospace;}
+form{padding:0; margin:0;}
+form input{padding:1px 10px; margin:2px;}
+form textarea{font-family:Consolas,monospace,monospace; padding:0; margin:0; height:250px; min-height:100px; min-width:300px; width:100%; box-sizing:border-box;}
+form.source{width:450px;}
+</style>
+<header><h1>short message and url crypter</h1></header>
+<div id="container"><form>
+	<!--<p name=source contenteditable=true>test</p>-->
+	<textarea name=edit id=source placeholder="Enter text or link"></textarea><br><br>
+	<input id=checkbox type=checkbox> with password
+	<input id=pswd type=password>
+	<input type=button value=" encrypt " onclick=encrypt()> or
+	<input type=button value=" decrypt " onclick=decrypt()>
+	<hr><p>Result: <tt id=output></tt>
+	<p><a id=link target=_blank href=#></a>
+</form></div>
+<footer id=info><hr>
+	<small>code for food © 2023 · <a href=>source</a> · <a href=LICENSE>unlicense</a> · </small>
+	<img id=counter src="https://api.visitorbadge.io/api/combined?path=tttt%2Ftest&label=visitors&labelColor=%23fcfcfc&countColor=%23fcfcfc&style=flat-square" >
+</footer>
+</body><script>
+let spinner_on=()=>document.getElementById("spinner").style.visibility="visible"
+let spinner_off=()=>document.getElementById("spinner").style.visibility="hidden"
+
+let zip=UZIP.deflateRaw;
+let zip_auint=function(text,buff){return UZIP.deflateRaw(utf_auint(text),{level:6})}
+let zip_utf=(t)=>auint_utf(zip_auint(t))
+let zip_b64=(t)=>auint_b64(zip_auint(t))
+let zip_text=(t)=>auint_b64(zip(b64_auint(btoa(t))))
+
+let unzip=UZIP.inflateRaw;
+let unzip_auint=function(text){return UZIP.inflateRaw(utf_auint(text))}
+let unzip_utf=(t)=>utf_clear(auint_utf(unzip_auint(t)))
+let unzip_b64=(t)=>utf_b64(unzip_utf(t))
+let unzip_text=(t)=>atob(auint_b64(unzip(b64_auint(t))))
+
+function encrypt(source){
+	spinner_on()
+	if(source){
+		document.getElementById("source").textContent=source
+	}
+	let t=document.getElementById("source").value
+	let p=document.getElementById("pswd").value
+	let ckbx=document.getElementById("checkbox").checked
+	let bf=new Blowfish(key=p)
+	console.log(ckbx,t,p)
+	let c=""
+	if(ckbx){c=zip_text(bf.encrypt(t))}
+	else{c=zip_text(t)}
+	console.log(c)
+	let link=url.protocol+"//"+url.pathname+"#"+c
+	//document.getElementById("output").textContent=c
+	document.getElementById("source").value=c
+	document.getElementById("link").textContent=document.getElementById("link").href=link
+	spinner_off()
+	return c
+}
+function decrypt(source){
+	spinner_on()
+	if(source){
+		document.getElementById("source").value=source
+	}
+	let t=document.getElementById("source").value
+	let p=document.getElementById("pswd").value
+	let ckbx=document.getElementById("checkbox").checked
+	let bf=new Blowfish(key=p)
+	let c=""
+	try{
+		if(ckbx){c=utf_clear(bf.decrypt(utf_clear(unzip_text(t))))}
+		else{c=utf_clear(unzip_text(t))}
+		//else{c=utf_clear(auint_utf(UZIP.inflateRaw(b64_auint(h))))}
+		//else{c=unzip_b64(t)}
+	}
+	catch(e){
+		console.error(e);
+		c=error.message
+	}
+	console.log(c)
+	//
+	//let link=""
+	//try{link=new URL(c)}
+	//catch(e){console.error(e)}
+
+	document.getElementById("output").textContent=c
+	document.getElementById("source").value=c
+	document.getElementById("link").textContent=document.getElementById("link").href=link.toString()
+	spinner_off()
+	return c
+}
+///
+function onload(){
+	document.getElementById("source").addEventListener("keyup", function(event) {
+		if (event.keyCode == 13 &&(event.ctrlKey||event.altKey||event.metaKey)) {
+			//event.preventDefault();
+			encrypt()
+			return false
+		}
+		return true
+	});
+	
+	if(q){
+		if(h){
+			//	m\b source link
+			document.getElementById("source").value=q+url.hash
+		}
+		else if(url.hash){	//	url.hash==='#'
+			//	to decode
+			console.log('decrypt',decrypt(q))
+			document.getElementById("source").value=q
+		}
+		else{
+			//	to encode
+			document.getElementById("source").value=q
+			t=encrypt(q)
+			document.getElementById("output").textContent=t
+		}
+	}
+	else if(h){
+		//	to decode
+		console.log('decrypt',decrypt(q))
+		document.getElementById("source").value=h
+	}
+	spinner_off()
+}
+onload()</script>
+</html>
+<!--код написан, будто нет никаких фреймворков. так задумано-->
